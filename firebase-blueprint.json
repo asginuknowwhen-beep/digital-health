@@ -1,0 +1,92 @@
+{
+  "entities": {
+    "GardenDesign": {
+      "title": "GardenDesign",
+      "description": "A user-owned dream garden design containing plot conditions, hardscape zones, placed plants, and local visual references.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Authenticated Firebase Auth UID of the garden owner."
+        },
+        "title": {
+          "type": "string",
+          "description": "Display title of the garden design."
+        },
+        "summary": {
+          "type": "string",
+          "description": "Concise architectural and botanical overview of the layout."
+        },
+        "style": {
+          "type": "string",
+          "description": "Chosen aesthetic style such as Warm Cottage, Japanese Zen, or Mediterranean."
+        },
+        "widthFeet": {
+          "type": "number",
+          "description": "Garden plot width in feet."
+        },
+        "lengthFeet": {
+          "type": "number",
+          "description": "Garden plot length in feet."
+        },
+        "sunlight": {
+          "type": "string",
+          "description": "Sunlight exposure profile (e.g., Full Sun, Part Shade, Full Shade)."
+        },
+        "soilType": {
+          "type": "string",
+          "description": "Soil composition profile (e.g., Loam, Clay, Sandy, Raised Bed Mix)."
+        },
+        "climateZone": {
+          "type": "string",
+          "description": "Target climate or USDA hardiness zone."
+        },
+        "hardscapeZones": {
+          "type": "array",
+          "description": "Bounded list of up to 20 hardscape zones (paths, patios, water features) with normalized coordinates."
+        },
+        "plants": {
+          "type": "array",
+          "description": "Bounded list of up to 60 placed plants with normalized coordinates and botanical care metadata."
+        },
+        "conceptVisualPath": {
+          "type": "string",
+          "description": "Optional local app-private file path to the AI-generated garden concept visual."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the garden design was created (written with FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the garden design was last modified (written with FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "title",
+        "summary",
+        "style",
+        "widthFeet",
+        "lengthFeet",
+        "sunlight",
+        "soilType",
+        "climateZone",
+        "hardscapeZones",
+        "plants",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/gardens/{gardenId}": {
+      "schema": {
+        "$ref": "#/entities/GardenDesign"
+      },
+      "description": "User-isolated collection of dream garden designs."
+    }
+  }
+}

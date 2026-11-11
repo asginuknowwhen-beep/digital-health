@@ -1,0 +1,62 @@
+<resources>
+    <string name="app_name">Verdant</string>
+
+    <!-- Auth Screen -->
+    <string name="auth_studio_badge">Verdant Botanical Studio</string>
+    <string name="auth_headline">Design Your Dream Garden</string>
+    <string name="auth_subtitle">Turn your yard dimensions, sunlight, and style into editable 2D blueprints and bespoke plant visuals.</string>
+    <string name="auth_feature_layout_title">Tailored 2D Garden Blueprints</string>
+    <string name="auth_feature_layout_desc">AI-zoned pathways, patios, water features, and companion plantings.</string>
+    <string name="auth_feature_plants_title">Climate &amp; Sun-Matched Flora</string>
+    <string name="auth_feature_plants_desc">Curated botanical species sized accurately to mature spread.</string>
+    <string name="auth_feature_visuals_title">On-Demand AI Plant &amp; Scene Visuals</string>
+    <string name="auth_feature_visuals_desc">Render botanical portraits and atmospheric garden previews.</string>
+    <string name="auth_sign_in_google">Sign in with Google</string>
+    <string name="auth_checking">Restoring session...</string>
+    <string name="auth_signing_in">Signing in...</string>
+
+    <!-- Gardens Home -->
+    <string name="home_title">My Gardens</string>
+    <string name="home_subtitle">Saved blueprints &amp; botanical concepts</string>
+    <string name="home_new_garden">New Garden</string>
+    <string name="home_sign_out">Sign out</string>
+    <string name="home_empty_title">Your drafting table is ready</string>
+    <string name="home_empty_body">Describe your sunlight, soil, and dream aesthetic to generate an interactive 2D garden layout and plant visuals.</string>
+    <string name="home_empty_cta">Create First Garden</string>
+    <string name="home_delete_confirm_title">Delete Garden?</string>
+    <string name="home_delete_confirm_body">This will permanently remove this layout from your cloud studio.</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_retry">Retry</string>
+    <string name="action_back">Back</string>
+
+    <!-- Design Wizard -->
+    <string name="wizard_title">Garden Preferences</string>
+    <string name="wizard_subtitle">Shape the conditions &amp; mood of your dream plot</string>
+    <string name="wizard_name_label">Garden Name (Optional)</string>
+    <string name="wizard_name_hint">e.g., Sunlit Lavender Courtyard</string>
+    <string name="wizard_style_section">Aesthetic Style</string>
+    <string name="wizard_space_section">Plot Dimensions &amp; Type</string>
+    <string name="wizard_conditions_section">Sunlight, Soil &amp; Climate</string>
+    <string name="wizard_features_section">Desired Zones &amp; Features</string>
+    <string name="wizard_photo_section">Reference Yard Photo (Optional)</string>
+    <string name="wizard_photo_add">Attach Yard Photo</string>
+    <string name="wizard_photo_clear">Remove Photo</string>
+    <string name="wizard_notes_label">Extra Wishes or Favorite Plants</string>
+    <string name="wizard_notes_hint">e.g., fragrant herbs near seating, pollinator-friendly blooms</string>
+    <string name="wizard_generate_cta">Generate Dream Layout</string>
+    <string name="wizard_generating">Drafting your garden blueprint &amp; selecting companion flora...</string>
+
+    <!-- Garden Studio -->
+    <string name="studio_tab_layout">2D Layout</string>
+    <string name="studio_tab_visuals">AI Visuals</string>
+    <string name="studio_tab_plants">Plant Palette</string>
+    <string name="studio_drag_hint">Tap a plant to inspect or drag to reposition</string>
+    <string name="studio_render_scene">Render Dream Garden View</string>
+    <string name="studio_rerender_scene">Regenerate Garden View</string>
+    <string name="studio_rendering_image">Composing botanical visual (typically 30–60s)...</string>
+    <string name="studio_visualize_plant">Generate Plant Visual</string>
+    <string name="studio_suggest_companions">AI Companion Ideas</string>
+    <string name="studio_swap_plant">Swap With AI Suggestion</string>
+    <string name="studio_add_plant">Add AI Companion Plant</string>
+</resources>

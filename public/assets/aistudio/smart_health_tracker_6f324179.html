@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Health Tracker - Asupan Protein & Pengukur Pertumbuhan Body</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        },
+                        emeraldCustom: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            500: '#10b981',
+                            600: '#059669',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+        .scan-laser {
+            background: linear-gradient(to bottom, rgba(16, 185, 129, 0), rgba(16, 185, 129, 0.8), rgba(16, 185, 129, 0));
+            animation: scan 2s infinite ease-in-out;
+        }
+        @keyframes scan {
+            0% { top: 0%; }
+            50% { top: 85%; }
+            100% { top: 0%; }
+        }
+        /* Custom scrollbar for database/history list */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col pb-20 md:pb-0">
+
+    <!-- TOP HEADER -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-emeraldCustom-500 flex items-center justify-center text-white shadow-md shadow-brand-500/20">
+                    <i data-lucide="activity" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight text-slate-900">HealthTrack<span class="text-brand-600">AI</span></h1>
+                    <p class="text-xs text-slate-500 hidden sm:block">Smart Protein & Growth Tracker</p>
+                </div>
+            </div>
+
+            <!-- Header Quick Stats & Date -->
+            <div class="flex items-center space-x-4">
+                <div class="hidden md:flex items-center bg-slate-100 px-3 py-1.5 rounded-lg text-xs text-slate-600 font-medium">
+                    <i data-lucide="calendar" class="w-4 h-4 mr-1.5 text-brand-600"></i>
+                    <span id="current-date-str">Hari Ini</span>
+                </div>
+                <button onclick="resetDataConfirmation()" title="Reset Data" class="text-slate-400 hover:text-red-500 p-2 rounded-lg hover:bg-slate-100 transition">
+                    <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN WRAPPER -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full flex flex-col md:flex-row gap-6">
+
+        <!-- DESKTOP SIDEBAR NAVIGATION -->
+        <aside class="hidden md:flex flex-col w-64 shrink-0 space-y-2">
+            <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-1">
+                <div class="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Navigasi Utama</div>
+                
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl font-medium text-sm transition bg-brand-50 text-brand-600">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                    <span>Dashboard</span>
+                </button>
+                
+                <button onclick="switchTab('scanner')" id="nav-scanner" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl font-medium text-sm text-slate-600 hover:bg-slate-100 transition">
+                    <i data-lucide="scan" class="w-5 h-5"></i>
+                    <span>Protein AI Scanner</span>
+                </button>
+                
+                <button onclick="switchTab('weight')" id="nav-weight" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl font-medium text-sm text-slate-600 hover:bg-slate-100 transition">
+                    <i data-lucide="scale" class="w-5 h-5"></i>
+                    <span>Weight Tracker</span>
+                </button>
+                
+                <button onclick="switchTab('height')" id="nav-height" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl font-medium text-sm text-slate-600 hover:bg-slate-100 transition">
+                    <i data-lucide="ruler" class="w-5 h-5"></i>
+                    <span>Height Tracker</span>
+                </button>
+
+                <button onclick="switchTab('database')" id="nav-database" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl font-medium text-sm text-slate-600 hover:bg-slate-100 transition">
+                    <i data-lucide="utensils" class="w-5 h-5"></i>
+                    <span>Database & Log</span>
+                </button>
+            </div>
+
+            <!-- Target Summary Widget -->
+            <div class="bg-gradient-to-br from-brand-600 to-brand-700 rounded-2xl p-4 text-white shadow-md shadow-brand-500/20">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-xs text-brand-100 font-medium">Target Protein Harian</span>
+                    <i data-lucide="flame" class="w-4 h-4 text-emerald-400"></i>
+                </div>
+                <div class="text-2xl font-bold mb-1" id="sidebar-protein-val">0 / 80g</div>
+                <div class="w-full bg-brand-900/40 rounded-full h-2 mb-2">
+                    <div id="sidebar-protein-bar" class="bg-emerald-400 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <p class="text-xs text-brand-100" id="sidebar-protein-status">Memuat data...</p>
+            </div>
+        </aside>
+
+        <!-- CONTENT CONTAINER -->
+        <main class="flex-1 min-w-0">
+
+            <!-- 1. DASHBOARD PAGE -->
+            <section id="page-dashboard" class="tab-page space-y-6">
+                <!-- Banner Welcome -->
+                <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-brand-950 rounded-2xl p-6 text-white relative overflow-hidden shadow-lg">
+                    <div class="relative z-10 max-w-xl">
+                        <span class="inline-block bg-brand-500/20 border border-brand-400/30 text-brand-300 text-xs px-3 py-1 rounded-full font-medium mb-3">Rangkuman Kesehatan & Nutrisi</span>
+                        <h2 class="text-2xl sm:text-3xl font-bold tracking-tight mb-2">Selamat Datang di HealthTrack AI</h2>
+                        <p class="text-slate-300 text-sm leading-relaxed">Pantau pertumbuhan fisik dan asupan protein harianmu dengan rekomendasi berbasis kecerdasan buatan.</p>
+                    </div>
+                    <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-emeraldCustom-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="absolute right-10 top-0 w-40 h-40 bg-brand-500/20 rounded-full blur-2xl pointer-events-none"></div>
+                </div>
+
+                <!-- Executive Cards Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Weight Card -->
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Berat Badan</span>
+                            <div class="p-2 rounded-xl bg-brand-50 text-brand-600">
+                                <i data-lucide="scale" class="w-5 h-5"></i>
+                            </div>
+                        </div>
+                        <div class="flex items-baseline space-x-2">
+                            <span class="text-3xl font-bold text-slate-900" id="dash-weight">-</span>
+                            <span class="text-sm font-medium text-slate-500">kg</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-2 flex items-center" id="dash-weight-sub">
+                            <i data-lucide="info" class="w-3.5 h-3.5 mr-1 text-slate-400"></i> Terakhir diperbarui
+                        </p>
+                    </div>
+
+                    <!-- Height Card -->
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tinggi Badan</span>
+                            <div class="p-2 rounded-xl bg-emeraldCustom-50 text-emeraldCustom-600">
+                                <i data-lucide="ruler" class="w-5 h-5"></i>
+                            </div>
+                        </div>
+                        <div class="flex items-baseline space-x-2">
+                            <span class="text-3xl font-bold text-slate-900" id="dash-height">-</span>
+                            <span class="text-sm font-medium text-slate-500">cm</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-2 flex items-center" id="dash-height-sub">
+                            <i data-lucide="info" class="w-3.5 h-3.5 mr-1 text-slate-400"></i> Pengukuran terkini
+                        </p>
+                    </div>
+
+                    <!-- BMI Card -->
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Indeks Massa Tubuh (BMI)</span>
+                            <div class="p-2 rounded-xl bg-indigo-50 text-indigo-600">
+                                <i data-lucide="activity" class="w-5 h-5"></i>
+                            </div>
+                        </div>
+                        <div class="flex items-baseline space-x-2">
+                            <span class="text-3xl font-bold text-slate-900" id="dash-bmi">-</span>
+                            <span class="text-xs px-2.5 py-0.5 rounded-full font-semibold" id="dash-bmi-badge">Memuat</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-2" id="dash-bmi-ideal">Kategori Ideal</p>
+                    </div>
+
+                    <!-- Protein Card -->
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Protein Hari Ini</span>
+                            <div class="p-2 rounded-xl bg-amber-50 text-amber-600">
+                                <i data-lucide="beef" class="w-5 h-5"></i>
+                            </div>
+                        </div>
+                        <div class="flex items-baseline space-x-1">
+                            <span class="text-3xl font-bold text-slate-900" id="dash-protein">0</span>
+                            <span class="text-sm text-slate-500 font-medium">/ <span id="dash-protein-target">80</span> g</span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-2 mt-3">
+                            <div id="dash-protein-progress" class="bg-emeraldCustom-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Recommendations Box -->
+                <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+                    <div class="flex items-center space-x-3 mb-3">
+                        <div class="p-2 rounded-xl bg-gradient-to-r from-brand-600 to-emeraldCustom-500 text-white">
+                            <i data-lucide="sparkles" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-slate-900">Rekomendasi Kesehatan AI</h3>
+                            <p class="text-xs text-slate-500">Analisis personal berbasis kondisi fisik dan asupan nutrisimu saat ini.</p>
+                        </div>
+                    </div>
+                    <div id="ai-recommendation-content" class="bg-slate-50 rounded-xl p-4 border border-slate-100 text-sm text-slate-700 leading-relaxed">
+                        Memuat rekomendasi cerdas...
+                    </div>
+                </div>
+
+                <!-- Interactive Charts Row -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-slate-900 text-sm flex items-center">
+                                <i data-lucide="trending-up" class="w-4 h-4 mr-2 text-brand-600"></i> Tren Berat Badan (kg)
+                            </h3>
+                            <span class="text-xs text-slate-400">Riwayat Terakhir</span>
+                        </div>
+                        <div class="h-64 relative">
+                            <canvas id="weightChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-slate-900 text-sm flex items-center">
+                                <i data-lucide="bar-chart-3" class="w-4 h-4 mr-2 text-emeraldCustom-600"></i> Asupan Protein Harian (g)
+                            </h3>
+                            <span class="text-xs text-slate-400">Target 80g</span>
+                        </div>
+                        <div class="h-64 relative">
+                            <canvas id="proteinChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. PROTEIN FOOD SCANNER (AI) PAGE -->
+            <section id="page-scanner" class="tab-page hidden space-y-6">
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+                    <div class="max-w-xl mx-auto text-center space-y-2 mb-6">
+                        <div class="inline-flex p-3 rounded-2xl bg-brand-50 text-brand-600 mb-1">
+                            <i data-lucide="scan" class="w-8 h-8"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold text-slate-900">AI Protein Food Scanner</h2>
+                        <p class="text-sm text-slate-500">Unggah foto makananmu atau pilih sampel di bawah untuk menganalisis kandungan protein dan makronutrisi secara otomatis.</p>
+                    </div>
+
+                    <!-- Simulator Upload Area -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                        <!-- Image Box & Scanner -->
+                        <div class="space-y-4">
+                            <div class="relative w-full h-64 sm:h-72 bg-slate-100 rounded-2xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center overflow-hidden group">
+                                <img id="scan-preview-img" src="" class="hidden w-full h-full object-cover" alt="Preview Makanan">
+                                
+                                <!-- Scanner Laser Line Overlay -->
+                                <div id="scan-laser" class="hidden absolute left-0 right-0 h-10 scan-laser z-10 pointer-events-none"></div>
+
+                                <!-- Default Upload Placeholder -->
+                                <div id="scan-upload-placeholder" class="text-center p-6 space-y-3">
+                                    <div class="w-12 h-12 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center mx-auto">
+                                        <i data-lucide="camera" class="w-6 h-6"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-semibold text-slate-700">Unggah Gambar Makanan</p>
+                                        <p class="text-xs text-slate-400 mt-1">PNG, JPG up to 5MB</p>
+                                    </div>
+                                    <label class="inline-block bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold px-4 py-2 rounded-xl cursor-pointer transition shadow-sm">
+                                        Pilih Berkas
+                                        <input type="file" id="file-input-scanner" accept="image/*" class="hidden" onchange="handleFileUpload(event)">
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Sample Quick Buttons -->
+                            <div>
+                                <p class="text-xs font-semibold text-slate-500 mb-2">Atau pilih sampel makanan untuk simulasi:</p>
+                                <div class="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                                    <button onclick="selectSampleFood('chicken')" class="p-2 border border-slate-200 rounded-xl hover:border-brand-500 hover:bg-brand-50 transition text-center text-xs space-y-1">
+                                        <div class="text-lg">🍗</div>
+                                        <div class="font-medium text-slate-700 truncate">Dada Ayam</div>
+                                    </button>
+                                    <button onclick="selectSampleFood('eggs')" class="p-2 border border-slate-200 rounded-xl hover:border-brand-500 hover:bg-brand-50 transition text-center text-xs space-y-1">
+                                        <div class="text-lg">🍳</div>
+                                        <div class="font-medium text-slate-700 truncate">Telur Rebus</div>
+                                    </button>
+                                    <button onclick="selectSampleFood('salmon')" class="p-2 border border-slate-200 rounded-xl hover:border-brand-500 hover:bg-brand-50 transition text-center text-xs space-y-1">
+                                        <div class="text-lg">🐟</div>
+                                        <div class="font-medium text-slate-700 truncate">Salmon</div>
+                                    </button>
+                                    <button onclick="selectSampleFood('tempeh')" class="p-2 border border-slate-200 rounded-xl hover:border-brand-500 hover:bg-brand-50 transition text-center text-xs space-y-1">
+                                        <div class="text-lg">🟧</div>
+                                        <div class="font-medium text-slate-700 truncate">Tempe Goreng</div>
+                                    </button>
+                                    <button onclick="selectSampleFood('shake')" class="p-2 border border-slate-200 rounded-xl hover:border-brand-500 hover:bg-brand-50 transition text-center text-xs space-y-1">
+                                        <div class="text-lg">🥤</div>
+                                        <div class="font-medium text-slate-700 truncate">Whey Shake</div>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Scan Result Panel -->
+                        <div class="bg-slate-50 rounded-2xl p-5 border border-slate-200 h-full flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between pb-3 border-b border-slate-200 mb-4">
+                                    <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Hasil Analisis AI Nutrisi</span>
+                                    <span id="scan-status-tag" class="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-slate-200 text-slate-600">Menunggu Input</span>
+                                </div>
+
+                                <div id="scan-result-body" class="space-y-4">
+                                    <div class="text-center py-8 text-slate-400">
+                                        <i data-lucide="cpu" class="w-10 h-10 mx-auto mb-2 opacity-50"></i>
+                                        <p class="text-sm">Silakan pilih atau unggah foto untuk dipindai oleh AI</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Add to log button -->
+                            <div class="pt-4 border-t border-slate-200 mt-4">
+                                <button id="btn-add-scan-log" disabled onclick="addScanResultToLog()" class="w-full bg-emeraldCustom-500 hover:bg-emeraldCustom-600 disabled:bg-slate-300 text-white font-semibold py-3 px-4 rounded-xl transition flex items-center justify-center space-x-2 shadow-sm">
+                                    <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                                    <span>Tambahkan ke Jurnal Hari Ini</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. WEIGHT TRACKER PAGE -->
+            <section id="page-weight" class="tab-page hidden space-y-6">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Input Form -->
+                    <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm h-fit">
+                        <h3 class="font-bold text-slate-900 mb-4 flex items-center">
+                            <i data-lucide="plus" class="w-5 h-5 mr-2 text-brand-600"></i> Catat Berat Badan
+                        </h3>
+                        <form onsubmit="handleWeightSubmit(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1">Berat Badan (kg)</label>
+                                <input type="number" step="0.1" id="input-weight-val" required placeholder="Contoh: 65.5" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1">Tanggal</label>
+                                <input type="date" id="input-weight-date" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1">Catatan Singkat (Opsional)</label>
+                                <input type="text" id="input-weight-note" placeholder="Misal: Selesai latihan pagi" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm">
+                            </div>
+                            <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-xl transition text-sm shadow-sm">
+                                Simpan Data Berat Badan
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Chart & Table -->
+                    <div class="lg:col-span-2 space-y-6">
+                        <!-- Detailed Chart -->
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                            <h3 class="font-bold text-slate-900 text-sm mb-4">Grafik Perkembangan Berat Badan</h3>
+                            <div class="h-64 relative">
+                                <canvas id="weightDetailChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- History Table -->
+                        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                            <div class="p-4 border-b border-slate-100 flex justify-between items-center">
+                                <h3 class="font-bold text-slate-900 text-sm">Riwayat Pengukuran Berat Badan</h3>
+                                <span class="text-xs text-slate-400" id="weight-count-tag">0 Data</span>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-sm">
+                                    <thead class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
+                                        <tr>
+                                            <th class="px-4 py-3">Tanggal</th>
+                                            <th class="px-4 py-3">Berat (kg)</th>
+                                            <th class="px-4 py-3">Catatan</th>
+                                            <th class="px-4 py-3 text-right">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="weight-history-table" class="divide-y divide-slate-100 text-slate-700">
+                                        <!-- Rows via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. HEIGHT TRACKER PAGE -->
+            <section id="page-height" class="tab-page hidden space-y-6">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Input Form -->
+                    <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm h-fit">
+                        <h3 class="font-bold text-slate-900 mb-4 flex items-center">
+                            <i data-lucide="plus" class="w-5 h-5 mr-2 text-emeraldCustom-600"></i> Catat Tinggi Badan
+                        </h3>
+                        <form onsubmit="handleHeightSubmit(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1">Tinggi Badan (cm)</label>
+                                <input type="number" step="0.5" id="input-height-val" required placeholder="Contoh: 170" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emeraldCustom-500 focus:border-emeraldCustom-500 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1">Tanggal Pengukuran</label>
+                                <input type="date" id="input-height-date" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emeraldCustom-500 focus:border-emeraldCustom-500 text-sm">
+                            </div>
+                            <button type="submit" class="w-full bg-emeraldCustom-600 hover:bg-emeraldCustom-700 text-white font-semibold py-2.5 rounded-xl transition text-sm shadow-sm">
+                                Perbarui Tinggi Badan
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Milestone Tracker & History -->
+                    <div class="lg:col-span-2 space-y-6">
+                        <!-- Milestone Box -->
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                            <h3 class="font-bold text-slate-900 text-sm mb-4">Milestone Perkembangan Tinggi Badan</h3>
+                            <div id="height-milestone-list" class="space-y-3">
+                                <!-- Milestones via JS -->
+                            </div>
+                        </div>
+
+                        <!-- Height History Table -->
+                        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                            <div class="p-4 border-b border-slate-100 flex justify-between items-center">
+                                <h3 class="font-bold text-slate-900 text-sm">Riwayat Pengukuran Tinggi Badan</h3>
+                                <span class="text-xs text-slate-400" id="height-count-tag">0 Data</span>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-sm">
+                                    <thead class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
+                                        <tr>
+                                            <th class="px-4 py-3">Tanggal</th>
+                                            <th class="px-4 py-3">Tinggi (cm)</th>
+                                            <th class="px-4 py-3">Perubahan</th>
+                                            <th class="px-4 py-3 text-right">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="height-history-table" class="divide-y divide-slate-100 text-slate-700">
+                                        <!-- Rows via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 5. FOOD DATABASE & HISTORY LOG PAGE -->
+            <section id="page-database" class="tab-page hidden space-y-6">
+                <!-- Today's Log Card -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-4 pb-3 border-b border-slate-100">
+                        <div>
+                            <h3 class="font-bold text-slate-900 flex items-center">
+                                <i data-lucide="clipboard-list" class="w-5 h-5 mr-2 text-brand-600"></i> Jurnal Asupan Hari Ini
+                            </h3>
+                            <p class="text-xs text-slate-500">Daftar makanan yang sudah dicatat hari ini.</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xs text-slate-500">Total Protein Hari Ini:</span>
+                            <span class="text-lg font-bold text-emeraldCustom-600 ml-1" id="log-total-protein">0 g</span>
+                        </div>
+                    </div>
+
+                    <div id="today-food-log-list" class="space-y-2 max-h-60 overflow-y-auto pr-1">
+                        <!-- Daily Log Items via JS -->
+                    </div>
+                </div>
+
+                <!-- Database Search Section -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                    <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                        <div>
+                            <h3 class="font-bold text-slate-900 flex items-center">
+                                <i data-lucide="database" class="w-5 h-5 mr-2 text-emeraldCustom-600"></i> Database Protein Makanan
+                            </h3>
+                            <p class="text-xs text-slate-500">Cari kandungan protein dan kalori dari makanan populer.</p>
+                        </div>
+                        <div class="relative w-full sm:w-64">
+                            <input type="text" id="search-food-input" oninput="filterFoodDatabase()" placeholder="Cari nama makanan..." class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500">
+                            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-3"></i>
+                        </div>
+                    </div>
+
+                    <!-- Database Grid -->
+                    <div id="food-database-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <!-- Cards via JS -->
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- MOBILE BOTTOM NAVIGATION -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-40 px-2 py-1 shadow-lg">
+        <div class="grid grid-cols-5 gap-1 text-center">
+            <button onclick="switchTab('dashboard')" id="mob-nav-dashboard" class="mob-nav-btn py-2 flex flex-col items-center text-brand-600">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                <span class="text-[10px] font-medium mt-1">Dashboard</span>
+            </button>
+            <button onclick="switchTab('scanner')" id="mob-nav-scanner" class="mob-nav-btn py-2 flex flex-col items-center text-slate-500">
+                <i data-lucide="scan" class="w-5 h-5"></i>
+                <span class="text-[10px] font-medium mt-1">AI Scan</span>
+            </button>
+            <button onclick="switchTab('weight')" id="mob-nav-weight" class="mob-nav-btn py-2 flex flex-col items-center text-slate-500">
+                <i data-lucide="scale" class="w-5 h-5"></i>
+                <span class="text-[10px] font-medium mt-1">Berat</span>
+            </button>
+            <button onclick="switchTab('height')" id="mob-nav-height" class="mob-nav-btn py-2 flex flex-col items-center text-slate-500">
+                <i data-lucide="ruler" class="w-5 h-5"></i>
+                <span class="text-[10px] font-medium mt-1">Tinggi</span>
+            </button>
+            <button onclick="switchTab('database')" id="mob-nav-database" class="mob-nav-btn py-2 flex flex-col items-center text-slate-500">
+                <i data-lucide="utensils" class="w-5 h-5"></i>
+                <span class="text-[10px] font-medium mt-1">Database</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- CUSTOM CONFIRMATION MODAL -->
+    <div id="modal-confirm" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-xl">
+            <div class="w-12 h-12 rounded-full bg-red-50 text-red-600 flex items-center justify-center mx-auto">
+                <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+            </div>
+            <div class="text-center">
+                <h3 class="font-bold text-slate-900 text-lg">Reset Seluruh Data?</h3>
+                <p class="text-xs text-slate-500 mt-1">Tindakan ini akan mengembalikan data aplikasi ke kondisi awal pabrik. Data riwayat akan dihapus.</p>
+            </div>
+            <div class="grid grid-cols-2 gap-3 pt-2">
+                <button onclick="closeModal()" class="px-4 py-2.5 border border-slate-300 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50">Batal</button>
+                <button onclick="executeDataReset()" class="px-4 py-2.5 bg-red-600 text-white rounded-xl text-sm font-semibold hover:bg-red-700">Ya, Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- APPLICATION LOGIC & STATE SCRIPT -->
+    <script>
+        // Sample predefined database of protein-rich foods
+        const FOOD_DATABASE = [
+            { id: 1, name: 'Dada Ayam Panggang', portion: '100 gram', protein: 31, calories: 165, carbs: 0, fat: 3.6, icon: '🍗' },
+            { id: 2, name: 'Telur Rebus (2 Butir)', portion: '100 gram', protein: 13, calories: 155, carbs: 1.1, fat: 11, icon: '🍳' },
+            { id: 3, name: 'Ikan Salmon Panggang', portion: '100 gram', protein: 25, calories: 206, carbs: 0, fat: 12, icon: '🐟' },
+            { id: 4, name: 'Tempe Goreng/Kukus', portion: '100 gram', protein: 19, calories: 193, carbs: 9, fat: 11, icon: '🟧' },
+            { id: 5, name: 'Tahu Putih Kukus', portion: '100 gram', protein: 8, calories: 76, carbs: 1.9, fat: 4.8, icon: '⬜' },
+            { id: 6, name: 'Daging Sapi Lean (Tanpa Lemak)', portion: '100 gram', protein: 26, calories: 250, carbs: 0, fat: 15, icon: '🥩' },
+            { id: 7, name: 'Whey Protein Powder', portion: '1 scoop (30g)', protein: 24, calories: 120, carbs: 2, fat: 1.5, icon: '🥤' },
+            { id: 8, name: 'Ikan Kembung Goreng', portion: '100 gram', protein: 22, calories: 167, carbs: 0, fat: 8.7, icon: '🐟' },
+            { id: 9, name: 'Kacang Almond', portion: '50 gram', protein: 10, calories: 289, carbs: 10, fat: 25, icon: '🥜' },
+        ];
+
+        // Sample food item maps for AI Scanner simulation
+        const SAMPLE_SCAN_DATA = {
+            chicken: {
+                name: 'Dada Ayam Panggang',
+                protein: 31,
+                calories: 165,
+                carbs: 0,
+                fat: 3.6,
+                confidence: 98,
+                image: 'https://images.unsplash.com/photo-1532550907401-a500c9a57435?auto=format&fit=crop&w=600&q=80'
+            },
+            eggs: {
+                name: 'Telur Rebus Matang',
+                protein: 13,
+                calories: 155,
+                carbs: 1.1,
+                fat: 11,
+                confidence: 96,
+                image: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?auto=format&fit=crop&w=600&q=80'
+            },
+            salmon: {
+                name: 'Fillet Salmon Oven',
+                protein: 25,
+                calories: 206,
+                carbs: 0,
+                fat: 12,
+                confidence: 94,
+                image: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&fit=crop&w=600&q=80'
+            },
+            tempeh: {
+                name: 'Tempe Goreng Bumbu',
+                protein: 19,
+                calories: 193,
+                carbs: 9,
+                fat: 11,
+                confidence: 91,
+                image: 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?auto=format&fit=crop&w=600&q=80'
+            },
+            shake: {
+                name: 'Whey Protein Shake',
+                protein: 24,
+                calories: 120,
+                carbs: 2,
+                fat: 1.5,
+                confidence: 99,
+                image: 'https://images.unsplash.com/photo-1579722821273-0f6c7d44362f?auto=format&fit=crop&w=600&q=80'
+            }
+        };
+
+        // Default App Initial State
+        const DEFAULT_STATE = {
+            weightHistory: [
+                { id: '1', date: '2026-11-01', weight: 68.0, note: 'Awal pengukuran' },
+                { id: '2', date: '2026-11-05', weight: 67.5, note: 'Sesudah rutin lari' },
+                { id: '3', date: '2026-11-08', weight: 67.0, note: 'Evaluasi mingguan' },
+                { id: '4', date: '2026-11-11', weight: 66.8, note: 'Kondisi stabil' },
+            ],
+            heightHistory: [
+                { id: '1', date: '2026-05-01', height: 171.0 },
+                { id: '2', date: '2026-08-01', height: 171.5 },
+                { id: '3', date: '2026-11-01', height: 172.0 },
+            ],
+            dailyProteinGoal: 80, // gram
+            todayFoodLog: [
+                { id: 'l1', name: 'Telur Rebus (2 Butir)', protein: 13, calories: 155, time: '08:00' },
+                { id: 'l2', name: 'Dada Ayam Panggang', protein: 31, calories: 165, time: '12:30' }
+            ],
+            currentScanResult: null
+        };
+
+        let appState = {};
+        let weightChartInstance = null;
+        let proteinChartInstance = null;
+        let weightDetailChartInstance = null;
+
+        // INITIALIZATION ON PAGE LOAD
+        window.onload = function() {
+            lucide.createIcons();
+            loadStateFromStorage();
+            setupCurrentDateDisplay();
+            renderAllViews();
+        };
+
+        // STATE & LOCAL STORAGE MANAGERS
+        function loadStateFromStorage() {
+            const stored = localStorage.getItem('health_tracker_app_state');
+            if (stored) {
+                try {
+                    appState = JSON.parse(stored);
+                } catch(e) {
+                    appState = JSON.parse(JSON.stringify(DEFAULT_STATE));
+                }
+            } else {
+                appState = JSON.parse(JSON.stringify(DEFAULT_STATE));
+                saveStateToStorage();
+            }
+        }
+
+        function saveStateToStorage() {
+            localStorage.setItem('health_tracker_app_state', JSON.stringify(appState));
+        }
+
+        function setupCurrentDateDisplay() {
+            const today = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const str = today.toLocaleDateString('id-ID', options);
+            document.getElementById('current-date-str').textContent = str;
+            
+            // Set default date inputs to today
+            const isoToday = today.toISOString().split('T')[0];
+            document.getElementById('input-weight-date').value = isoToday;
+            document.getElementById('input-height-date').value = isoToday;
+        }
+
+        // NAVIGATION LOGIC
+        function switchTab(tabId) {
+            // Hide all pages
+            document.querySelectorAll('.tab-page').forEach(el => el.classList.add('hidden'));
+            
+            // Show selected page
+            const target = document.getElementById('page-' + tabId);
+            if(target) target.classList.remove('hidden');
+
+            // Update Desktop Sidebar Buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-brand-50', 'text-brand-600');
+                btn.classList.add('text-slate-600');
+            });
+            const activeNav = document.getElementById('nav-' + tabId);
+            if(activeNav) {
+                activeNav.classList.remove('text-slate-600');
+                activeNav.classList.add('bg-brand-50', 'text-brand-600');
+            }
+
+            // Update Mobile Nav Buttons
+            document.querySelectorAll('.mob-nav-btn').forEach(btn => {
+                btn.classList.remove('text-brand-600');
+                btn.classList.add('text-slate-500');
+            });
+            const activeMobNav = document.getElementById('mob-nav-' + tabId);
+            if(activeMobNav) {
+                activeMobNav.classList.remove('text-slate-500');
+                activeMobNav.classList.add('text-brand-600');
+            }
+
+            // Re-render components or resize charts if needed
+            if (tabId === 'dashboard') {
+                renderCharts();
+            } else if (tabId === 'weight') {
+                renderWeightDetailChart();
+            }
+        }
+
+        // RENDER ALL VIEWS
+        function renderAllViews() {
+            renderDashboardCards();
+            renderCharts();
+            renderWeightHistory();
+            renderHeightHistory();
+            renderFoodLog();
+            renderFoodDatabaseGrid();
+        }
+
+        // 1. DASHBOARD COMPUTATION & RENDER
+        function renderDashboardCards() {
+            // Current Weight & Height
+            const latestWeightObj = appState.weightHistory.length > 0 ? appState.weightHistory[appState.weightHistory.length - 1] : { weight: 0, date: '-' };
+            const latestHeightObj = appState.heightHistory.length > 0 ? appState.heightHistory[appState.heightHistory.length - 1] : { height: 0, date: '-' };
+
+            const weight = parseFloat(latestWeightObj.weight) || 0;
+            const height = parseFloat(latestHeightObj.height) || 0;
+
+            document.getElementById('dash-weight').textContent = weight > 0 ? weight.toFixed(1) : '-';
+            document.getElementById('dash-weight-sub').innerHTML = `<i data-lucide="calendar" class="w-3.5 h-3.5 mr-1 text-slate-400"></i> ${latestWeightObj.date}`;
+            
+            document.getElementById('dash-height').textContent = height > 0 ? height.toFixed(1) : '-';
+            document.getElementById('dash-height-sub').innerHTML = `<i data-lucide="calendar" class="w-3.5 h-3.5 mr-1 text-slate-400"></i> ${latestHeightObj.date}`;
+
+            // BMI Calculation
+            let bmiText = '-';
+            let bmiBadgeText = 'Tidak ada data';
+            let bmiBadgeColor = 'bg-slate-100 text-slate-600';
+            let bmiCategoryText = 'Kategori Normal: 18.5 - 24.9';
+
+            if (weight > 0 && height > 0) {
+                const heightInMeters = height / 100;
+                const bmi = weight / (heightInMeters * heightInMeters);
+                bmiText = bmi.toFixed(1);
+
+                if (bmi < 18.5) {
+                    bmiBadgeText = 'Kurang Berat';
+                    bmiBadgeColor = 'bg-amber-100 text-amber-700';
+                } else if (bmi >= 18.5 && bmi <= 24.9) {
+                    bmiBadgeText = 'Normal / Ideal';
+                    bmiBadgeColor = 'bg-emerald-100 text-emerald-700';
+                } else if (bmi >= 25 && bmi <= 29.9) {
+                    bmiBadgeText = 'Kelebihan Berat';
+                    bmiBadgeColor = 'bg-orange-100 text-orange-700';
+                } else {
+                    bmiBadgeText = 'Obesitas';
+                    bmiBadgeColor = 'bg-red-100 text-red-700';
+                }
+            }
+
+            const bmiBadge = document.getElementById('dash-bmi-badge');
+            document.getElementById('dash-bmi').textContent = bmiText;
+            bmiBadge.textContent = bmiBadgeText;
+            bmiBadge.className = `text-xs px-2.5 py-0.5 rounded-full font-semibold ${bmiBadgeColor}`;
+            document.getElementById('dash-bmi-ideal').textContent = bmiCategoryText;
+
+            // Protein Calculation Today
+            const totalProteinToday = appState.todayFoodLog.reduce((sum, item) => sum + (parseFloat(item.protein) || 0), 0);
+            const goal = appState.dailyProteinGoal || 80;
+            const progressPercent = Math.min(100, Math.round((totalProteinToday / goal) * 100));
+
+            document.getElementById('dash-protein').textContent = totalProteinToday;
+            document.getElementById('dash-protein-target').textContent = goal;
+            document.getElementById('dash-protein-progress').style.width = progressPercent + '%';
+
+            // Update Sidebar Widget
+            document.getElementById('sidebar-protein-val').textContent = `${totalProteinToday} / ${goal}g`;
+            document.getElementById('sidebar-protein-bar').style.width = progressPercent + '%';
+            document.getElementById('sidebar-protein-status').textContent = progressPercent >= 100 ? '🎉 Target Tercapai!' : `${goal - totalProteinToday}g lagi untuk capai target`;
+
+            // Dynamic AI Recommendations
+            renderAIRecommendation(bmiText, totalProteinToday, goal, weight);
+            lucide.createIcons();
+        }
+
+        function renderAIRecommendation(bmiStr, currentProtein, targetProtein, weight) {
+            const recBox = document.getElementById('ai-recommendation-content');
+            if (bmiStr === '-') {
+                recBox.innerHTML = '<p>Masukkan data berat dan tinggi badan Anda untuk mendapatkan rekomendasi kesehatan cerdas dari AI.</p>';
+                return;
+            }
+
+            const bmi = parseFloat(bmiStr);
+            let tips = [];
+
+            // BMI Related Advice
+            if (bmi < 18.5) {
+                tips.push('💡 <b>Indeks Massa Tubuh Rendah:</b> Disarankan meningkatkan asupan kalori bernutrisi dan protein harian untuk menambah massa otot secara sehat.');
+            } else if (bmi >= 18.5 && bmi <= 24.9) {
+                tips.push('✅ <b>BMI dalam Rentang Ideal:</b> Pertahankan pola makan seimbang dan konsistensi latihan fisik secara teratur.');
+            } else {
+                tips.push('⚠️ <b>Perhatian BMI:</b> Pertimbangkan untuk menambah aktivitas kardio ringan serta menjaga keseimbangan defisit kalori harian.');
+            }
+
+            // Protein Intake Advice
+            if (currentProtein < targetProtein) {
+                const rem = targetProtein - currentProtein;
+                tips.push(`🍗 <b>Target Protein Harian:</b> Anda masih membutuhkan sekitar <b>${rem} gram protein</b> lagi hari ini. Cobalah mengonsumsi dada ayam, telur, atau whey protein pada jam makan berikutnya.`);
+            } else {
+                tips.push('🎉 <b>Hebat!</b> Asupan protein harian Anda hari ini sudah memenuhi target minimal sintesis otot.');
+            }
+
+            recBox.innerHTML = tips.map(t => `<div class="mb-2 last:mb-0">${t}</div>`).join('');
+        }
+
+        // CHARTS SETUP (Dashboard & Weight Detail)
+        function renderCharts() {
+            // 1. Dashboard Weight Chart
+            const ctxWeight = document.getElementById('weightChart').getContext('2d');
+            const labelsWeight = appState.weightHistory.map(item => item.date);
+            const dataWeight = appState.weightHistory.map(item => item.weight);
+
+            if (weightChartInstance) weightChartInstance.destroy();
+
+            weightChartInstance = new Chart(ctxWeight, {
+                type: 'line',
+                data: {
+                    labels: labelsWeight,
+                    datasets: [{
+                        label: 'Berat Badan (kg)',
+                        data: dataWeight,
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        pointBackgroundColor: '#2563eb',
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: false, grid: { color: '#f1f5f9' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // 2. Dashboard Protein Chart (Simulated 5-day history + today)
+            const ctxProtein = document.getElementById('proteinChart').getContext('2d');
+            const todayTotal = appState.todayFoodLog.reduce((s, i) => s + (i.protein || 0), 0);
+            
+            const proteinData = [65, 78, 85, 70, 60, todayTotal];
+            const proteinLabels = ['5 Hari Lalu', '4 Hari Lalu', '3 Hari Lalu', 'Kemarin Dulu', 'Kemarin', 'Hari Ini'];
+
+            if (proteinChartInstance) proteinChartInstance.destroy();
+
+            proteinChartInstance = new Chart(ctxProtein, {
+                type: 'bar',
+                data: {
+                    labels: proteinLabels,
+                    datasets: [{
+                        label: 'Protein (g)',
+                        data: proteinData,
+                        backgroundColor: proteinData.map(v => v >= 80 ? '#10b981' : '#3b82f6'),
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function renderWeightDetailChart() {
+            const ctx = document.getElementById('weightDetailChart');
+            if(!ctx) return;
+            const labels = appState.weightHistory.map(item => item.date);
+            const data = appState.weightHistory.map(item => item.weight);
+
+            if (weightDetailChartInstance) weightDetailChartInstance.destroy();
+
+            weightDetailChartInstance = new Chart(ctx.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Berat Badan (kg)',
+                        data: data,
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.05)',
+                        fill: true,
+                        tension: 0.2,
+                        pointBackgroundColor: '#2563eb',
+                        pointRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: false }
+                    }
+                }
+            });
+        }
+
+        // 2. PROTEIN FOOD SCANNER LOGIC (AI SIMULATION)
+        function selectSampleFood(key) {
+            const sample = SAMPLE_SCAN_DATA[key];
+            if (!sample) return;
+
+            triggerScanAnimation(sample.image, sample);
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const customData = {
+                    name: 'Hasil Pemindaian AI (' + file.name.split('.')[0] + ')',
+                    protein: Math.floor(Math.random() * 20) + 15, // AI Simulated value
+                    calories: Math.floor(Math.random() * 150) + 120,
+                    carbs: Math.floor(Math.random() * 10),
+                    fat: Math.floor(Math.random() * 10) + 2,
+                    confidence: 93,
+                    image: e.target.result
+                };
+                triggerScanAnimation(e.target.result, customData);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function triggerScanAnimation(imgSrc, scanData) {
+            const previewImg = document.getElementById('scan-preview-img');
+            const placeholder = document.getElementById('scan-upload-placeholder');
+            const laser = document.getElementById('scan-laser');
+            const statusTag = document.getElementById('scan-status-tag');
+            const resultBody = document.getElementById('scan-result-body');
+            const btnAdd = document.getElementById('btn-add-scan-log');
+
+            // Set image preview
+            previewImg.src = imgSrc;
+            previewImg.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+            laser.classList.remove('hidden');
+
+            statusTag.textContent = 'Memindai AI...';
+            statusTag.className = 'text-xs px-2.5 py-0.5 rounded-full font-semibold bg-brand-100 text-brand-700 animate-pulse';
+            btnAdd.disabled = true;
+
+            resultBody.innerHTML = `
+                <div class="text-center py-8 text-brand-600">
+                    <i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto mb-2"></i>
+                    <p class="text-sm font-medium">Menganalisis jenis makanan & makronutrisi...</p>
+                </div>
+            `;
+            lucide.createIcons();
+
+            // Simulate AI Delay
+            setTimeout(() => {
+                laser.classList.add('hidden');
+                statusTag.textContent = `Akurasi ${scanData.confidence}%`;
+                statusTag.className = 'text-xs px-2.5 py-0.5 rounded-full font-semibold bg-emerald-100 text-emerald-700';
+
+                appState.currentScanResult = scanData;
+
+                resultBody.innerHTML = `
+                    <div class="space-y-3">
+                        <div>
+                            <h4 class="text-lg font-bold text-slate-900">${scanData.name}</h4>
+                            <p class="text-xs text-slate-500">Estimasi per porsi standar (100g)</p>
+                        </div>
+                        
+                        <!-- Highlight Protein -->
+                        <div class="bg-gradient-to-r from-emeraldCustom-500 to-emeraldCustom-600 text-white p-3.5 rounded-xl flex justify-between items-center shadow-sm">
+                            <span class="text-xs font-semibold uppercase">Kandungan Protein</span>
+                            <span class="text-2xl font-extrabold">${scanData.protein} g</span>
+                        </div>
+
+                        <!-- Macro Details Grid -->
+                        <div class="grid grid-cols-3 gap-2 text-center text-xs">
+                            <div class="bg-white p-2.5 rounded-xl border border-slate-200">
+                                <span class="text-slate-400 block">Kalori</span>
+                                <span class="font-bold text-slate-800 text-sm">${scanData.calories} kcal</span>
+                            </div>
+                            <div class="bg-white p-2.5 rounded-xl border border-slate-200">
+                                <span class="text-slate-400 block">Karbo</span>
+                                <span class="font-bold text-slate-800 text-sm">${scanData.carbs} g</span>
+                            </div>
+                            <div class="bg-white p-2.5 rounded-xl border border-slate-200">
+                                <span class="text-slate-400 block">Lemak</span>
+                                <span class="font-bold text-slate-800 text-sm">${scanData.fat} g</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                btnAdd.disabled = false;
+                lucide.createIcons();
+            }, 1500);
+        }
+
+        function addScanResultToLog() {
+            if (!appState.currentScanResult) return;
+            const res = appState.currentScanResult;
+            
+            const now = new Date();
+            const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+
+            appState.todayFoodLog.unshift({
+                id: Date.now().toString(),
+                name: res.name,
+                protein: res.protein,
+                calories: res.calories,
+                time: timeStr
+            });
+
+            saveStateToStorage();
+            renderDashboardCards();
+            renderCharts();
+            renderFoodLog();
+
+            // Switch to Database & Log view
+            switchTab('database');
+        }
+
+        // 3. WEIGHT TRACKER LOGIC
+        function handleWeightSubmit(e) {
+            e.preventDefault();
+            const valInput = document.getElementById('input-weight-val');
+            const dateInput = document.getElementById('input-weight-date');
+            const noteInput = document.getElementById('input-weight-note');
+
+            const val = parseFloat(valInput.value);
+            if (!val) return;
+
+            appState.weightHistory.push({
+                id: Date.now().toString(),
+                date: dateInput.value,
+                weight: val,
+                note: noteInput.value || 'Catatan rutin'
+            });
+
+            // Sort by date ascending
+            appState.weightHistory.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            saveStateToStorage();
+            renderDashboardCards();
+            renderWeightHistory();
+            renderWeightDetailChart();
+            renderCharts();
+
+            valInput.value = '';
+            noteInput.value = '';
+        }
+
+        function renderWeightHistory() {
+            const table = document.getElementById('weight-history-table');
+            const countTag = document.getElementById('weight-count-tag');
+            countTag.textContent = `${appState.weightHistory.length} Data`;
+
+            if (appState.weightHistory.length === 0) {
+                table.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-slate-400 text-xs">Belum ada riwayat berat badan</td></tr>`;
+                return;
+            }
+
+            table.innerHTML = [...appState.weightHistory].reverse().map(item => `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="px-4 py-3 font-medium text-slate-900">${item.date}</td>
+                    <td class="px-4 py-3 font-bold text-brand-600">${item.weight.toFixed(1)} kg</td>
+                    <td class="px-4 py-3 text-slate-500 text-xs">${item.note || '-'}</td>
+                    <td class="px-4 py-3 text-right">
+                        <button onclick="deleteWeightItem('${item.id}')" class="text-slate-400 hover:text-red-600 transition">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+
+            lucide.createIcons();
+        }
+
+        function deleteWeightItem(id) {
+            appState.weightHistory = appState.weightHistory.filter(item => item.id !== id);
+            saveStateToStorage();
+            renderDashboardCards();
+            renderWeightHistory();
+            renderWeightDetailChart();
+            renderCharts();
+        }
+
+        // 4. HEIGHT TRACKER LOGIC
+        function handleHeightSubmit(e) {
+            e.preventDefault();
+            const valInput = document.getElementById('input-height-val');
+            const dateInput = document.getElementById('input-height-date');
+
+            const val = parseFloat(valInput.value);
+            if (!val) return;
+
+            appState.heightHistory.push({
+                id: Date.now().toString(),
+                date: dateInput.value,
+                height: val
+            });
+
+            // Sort by date ascending
+            appState.heightHistory.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            saveStateToStorage();
+            renderDashboardCards();
+            renderHeightHistory();
+
+            valInput.value = '';
+        }
+
+        function renderHeightHistory() {
+            const table = document.getElementById('height-history-table');
+            const countTag = document.getElementById('height-count-tag');
+            const milestoneContainer = document.getElementById('height-milestone-list');
+
+            countTag.textContent = `${appState.heightHistory.length} Data`;
+
+            if (appState.heightHistory.length === 0) {
+                table.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-slate-400 text-xs">Belum ada riwayat tinggi badan</td></tr>`;
+                milestoneContainer.innerHTML = `<p class="text-xs text-slate-400">Belum ada data milestone.</p>`;
+                return;
+            }
+
+            let prevHeight = null;
+            const reversed = [...appState.heightHistory].reverse();
+
+            table.innerHTML = reversed.map((item, idx) => {
+                let diffText = '-';
+                if (idx < reversed.length - 1) {
+                    const prev = reversed[idx + 1].height;
+                    const diff = item.height - prev;
+                    if (diff > 0) diffText = `<span class="text-emeraldCustom-600 font-semibold">+${diff.toFixed(1)} cm</span>`;
+                    else if (diff < 0) diffText = `<span class="text-red-500 font-semibold">${diff.toFixed(1)} cm</span>`;
+                    else diffText = `<span class="text-slate-400">Tetap</span>`;
+                }
+
+                return `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="px-4 py-3 font-medium text-slate-900">${item.date}</td>
+                        <td class="px-4 py-3 font-bold text-emeraldCustom-600">${item.height.toFixed(1)} cm</td>
+                        <td class="px-4 py-3 text-xs">${diffText}</td>
+                        <td class="px-4 py-3 text-right">
+                            <button onclick="deleteHeightItem('${item.id}')" class="text-slate-400 hover:text-red-600 transition">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            // Milestone visualizer
+            const latest = appState.heightHistory[appState.heightHistory.length - 1].height;
+            const first = appState.heightHistory[0].height;
+            const totalGrowth = latest - first;
+
+            milestoneContainer.innerHTML = `
+                <div class="bg-emeraldCustom-50 border border-emeraldCustom-100 rounded-xl p-4 flex items-center justify-between">
+                    <div>
+                        <span class="text-xs font-semibold text-emeraldCustom-700 uppercase">Total Pertumbuhan Dicatat</span>
+                        <h4 class="text-xl font-bold text-slate-900">${totalGrowth >= 0 ? '+' : ''}${totalGrowth.toFixed(1)} cm</h4>
+                    </div>
+                    <div class="w-10 h-10 rounded-full bg-emeraldCustom-500 text-white flex items-center justify-center">
+                        <i data-lucide="sparkles" class="w-5 h-5"></i>
+                    </div>
+                </div>
+            `;
+
+            lucide.createIcons();
+        }
+
+        function deleteHeightItem(id) {
+            appState.heightHistory = appState.heightHistory.filter(item => item.id !== id);
+            saveStateToStorage();
+            renderDashboardCards();
+            renderHeightHistory();
+        }
+
+        // 5. FOOD DATABASE & HISTORY LOG LOGIC
+        function renderFoodLog() {
+            const container = document.getElementById('today-food-log-list');
+            const totalProteinLabel = document.getElementById('log-total-protein');
+
+            const total = appState.todayFoodLog.reduce((s, i) => s + (i.protein || 0), 0);
+            totalProteinLabel.textContent = `${total} g`;
+
+            if (appState.todayFoodLog.length === 0) {
+                container.innerHTML = `<p class="text-center text-xs text-slate-400 py-6">Belum ada makanan dicatat hari ini.</p>`;
+                return;
+            }
+
+            container.innerHTML = appState.todayFoodLog.map(item => `
+                <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100 hover:border-slate-200 transition">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-lg bg-emeraldCustom-100 text-emeraldCustom-700 flex items-center justify-center font-bold text-xs">
+                            +${item.protein}g
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-slate-900 text-sm">${item.name}</h4>
+                            <p class="text-xs text-slate-400">${item.time} • ${item.calories || 0} kcal</p>
+                        </div>
+                    </div>
+                    <button onclick="deleteLogItem('${item.id}')" class="text-slate-400 hover:text-red-500 p-1 rounded transition">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            `).join('');
+
+            lucide.createIcons();
+        }
+
+        function deleteLogItem(id) {
+            appState.todayFoodLog = appState.todayFoodLog.filter(item => item.id !== id);
+            saveStateToStorage();
+            renderDashboardCards();
+            renderCharts();
+            renderFoodLog();
+        }
+
+        function quickAddFoodToLog(foodId) {
+            const food = FOOD_DATABASE.find(f => f.id === foodId);
+            if (!food) return;
+
+            const now = new Date();
+            const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+
+            appState.todayFoodLog.unshift({
+                id: Date.now().toString(),
+                name: food.name,
+                protein: food.protein,
+                calories: food.calories,
+                time: timeStr
+            });
+
+            saveStateToStorage();
+            renderDashboardCards();
+            renderCharts();
+            renderFoodLog();
+        }
+
+        function renderFoodDatabaseGrid(filterQuery = '') {
+            const container = document.getElementById('food-database-grid');
+            const q = filterQuery.toLowerCase().trim();
+
+            const items = FOOD_DATABASE.filter(f => f.name.toLowerCase().includes(q));
+
+            if (items.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center py-6 text-slate-400 text-xs">Makanan tidak ditemukan</div>`;
+                return;
+            }
+
+            container.innerHTML = items.map(food => `
+                <div class="bg-white p-4 rounded-xl border border-slate-200 hover:shadow-md transition flex flex-col justify-between space-y-3">
+                    <div class="flex items-start justify-between">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-2xl">${food.icon}</span>
+                            <div>
+                                <h4 class="font-bold text-slate-900 text-sm leading-tight">${food.name}</h4>
+                                <span class="text-[11px] text-slate-400">${food.portion}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-2 rounded-lg">
+                        <div>
+                            <span class="text-slate-400 block">Protein</span>
+                            <span class="font-bold text-emeraldCustom-600">${food.protein} g</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 block">Kalori</span>
+                            <span class="font-semibold text-slate-700">${food.calories} kcal</span>
+                        </div>
+                    </div>
+
+                    <button onclick="quickAddFoodToLog(${food.id})" class="w-full bg-slate-100 hover:bg-brand-50 hover:text-brand-600 text-slate-700 text-xs font-semibold py-2 rounded-lg transition flex items-center justify-center space-x-1">
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                        <span>Tambah ke Log Hari Ini</span>
+                    </button>
+                </div>
+            `).join('');
+
+            lucide.createIcons();
+        }
+
+        function filterFoodDatabase() {
+            const query = document.getElementById('search-food-input').value;
+            renderFoodDatabaseGrid(query);
+        }
+
+        // RESET DATA MODAL LOGIC
+        function resetDataConfirmation() {
+            document.getElementById('modal-confirm').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('modal-confirm').classList.add('hidden');
+        }
+
+        function executeDataReset() {
+            localStorage.removeItem('health_tracker_app_state');
+            appState = JSON.parse(JSON.stringify(DEFAULT_STATE));
+            saveStateToStorage();
+            renderAllViews();
+            closeModal();
+            switchTab('dashboard');
+        }
+    </script>
+</body>
+</html>
